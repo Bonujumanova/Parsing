@@ -45,10 +45,12 @@ if category:
 
     print(f"Выбрана категория: {name}  {selected_url} ")
 
-
 response_2 = requests.get(selected_url)
+soup = BeautifulSoup(response_2.text, features="html.parser")
+
 category_2 = set(soup.find("ul", class_="wallpapers__list"))
 print(response.status_code)
+
 [print() for i in range(2)]
 
 catalog_2: dict = {}
@@ -77,18 +79,17 @@ if category_2:
     [print() for i in range(2)]
     print(f"Вы выбрали картинку '{selected_img_name} {selected_img_link}'")
 
-# response_3 = requests.get(selected_img_link)
-# soup = BeautifulSoup(response.text, features="html.parser")
-# category_3 = soup.find("div", class_="gui-toggler__content JS-Toggler-Content")
-# # print(response.status_code)
-# # print(category_3)
+response_3 = requests.get(selected_img_link)
+soup = BeautifulSoup(response_3.text, features="html.parser")
+category_3 = soup.find("div", class_="gui-toggler__content JS-Toggler-Content")
+print(category_3)
 #
 # for div_ in category_3:
 #     div_ = div_.find_next("div", class_="resolutions__title gui-h3")
 #     print(div_)
-#
-#
-#
+
+
+
 
 
     #
