@@ -41,6 +41,7 @@ if category:
     name = catalog[user_input][0]
     selected_url = catalog[user_input][1]
 
+    [print() for i in range(2)]
 
     print(f"Выбрана категория: {name}  {selected_url} ")
 
@@ -48,6 +49,7 @@ if category:
 response_2 = requests.get(selected_url)
 category_2 = set(soup.find("ul", class_="wallpapers__list"))
 print(response.status_code)
+[print() for i in range(2)]
 
 catalog_2: dict = {}
 
@@ -65,13 +67,14 @@ if category_2:
 
         print(f"{i:>{length_category_2}}. {name}")
 
+    [print() for i in range(2)]
+
     user_input_2 = int(input("Выберите номер картинки, подходящей по описанию: "))
 
     selected_img_name = catalog_2[user_input_2][0]
     selected_img_link = catalog_2[user_input_2][1]
 
-    print(selected_img_link)
-
+    [print() for i in range(2)]
     print(f"Вы выбрали картинку '{selected_img_name} {selected_img_link}'")
 
 # response_3 = requests.get(selected_img_link)
@@ -86,20 +89,6 @@ if category_2:
 #
 #
 #
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     #
