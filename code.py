@@ -82,11 +82,15 @@ if category_2:
 response_3 = requests.get(selected_img_link)
 soup = BeautifulSoup(response_3.text, features="html.parser")
 category_3 = soup.find("div", class_="gui-toggler__content JS-Toggler-Content")
-print(category_3)
-#
-# for div_ in category_3:
-#     div_ = div_.find_next("div", class_="resolutions__title gui-h3")
-#     print(div_)
+
+
+# в данном случае section на одном уровне с div? значит без обращения к section можно напрямую обратиться к div и
+# и получить title(), но фунция find_next() 2 раза выдает "мобильные" и просисходит ошибка. Почему именно после 2го рза
+# просходит ошибка. Нужно почитать про структуру html, неужели selection яв-ся страшим классом для div class=resolutions__title gui-h3
+for div_ in category_3:
+    # div_ = div_.find_next("section", class_="resolutions__section resolutions__section_torn")
+    type_of_wallpaper = div_.find_next('div', class_="resolutions__title gui-h3")
+    print(type_of_wallpaper)
 
 
 
