@@ -2,6 +2,7 @@ import time
 
 import requests
 from bs4 import BeautifulSoup
+from pprint import pprint
 
 from wallpapers.constants import CATEGORIES_MAP, SITE_URL
 
@@ -11,7 +12,17 @@ def show_categories(categories: dict[str, str]) -> None:
     pass
 
 
+# def show_images(data: dict[str, list]) -> None:
+#     # TODO: Реализовать вывод пронумерованных картинок:
+#     #  - Название
+#     #  - Ключевые слова
+#     #  - Абсолютная ссылка
+#     pass
+
 def show_images(data: dict[str, list]) -> None:
+    length: int = int(len(str(len(data))))
+    for number, value in enumerate(data.values(), 1):
+        print(f"{number:>{length}}. {' '.join(item for item in value)}")
     # TODO: Реализовать вывод пронумерованных картинок:
     #  - Название
     #  - Ключевые слова
@@ -19,22 +30,57 @@ def show_images(data: dict[str, list]) -> None:
     pass
 
 
-def parse_images_on_page(curr_page: str) -> dict[str, list]:
+def get_image(images: dict[str, list], numbers: list[int]):
+    # Тут все таки нужно возвращать словарь, name: link, тогда в дальнейшем будет удобнее работать, точнее распаовывать/
+    # Хотя с другой стороны список с кортежами(name, link) тоже не сложно распаковать. Во втором случае придется/
+    # прибегнуть к циклу
+
+    selected_images_name_link: list[tuple] = []
+    for number in numbers:
+        print(number)
+        image_link = list(images.keys())[number - 1]
+        image_name = images.get(image_link)
+        selected_images_name_link.append((image_name, image_link))
+
+    return selected_images_name_link
+
+
+
+
+# def parse_images_on_page(curr_page: str) -> dict[str, list]:
+#     soup = BeautifulSoup(curr_page, features="html.parser")
+#     all_images = set(soup.find("ul", class_="wallpapers__list"))
+#
+#     data: dict[str, list] = {}
+#     for i, li in enumerate(all_images, 1):
+#         item = li.find_next("a", class_="wallpapers__link")
+#         link = item.get("href")
+#
+#         preview = item.find_next(
+#             "img",
+#             class_="wallpapers__image"
+#         ).attrs.get("alt", "Not previews").split(", ")
+#         data[link] = preview
+#
+#     return data
+
+
+def parse_images_on_page(curr_page: str, all_images_names_and_links) -> dict[str, list]:
     soup = BeautifulSoup(curr_page, features="html.parser")
     all_images = set(soup.find("ul", class_="wallpapers__list"))
 
-    data: dict[str, list] = {}
+    #data: dict[str, list] = {}
     for i, li in enumerate(all_images, 1):
         item = li.find_next("a", class_="wallpapers__link")
         link = item.get("href")
-
+        # А почему мы решили, что превью нужно преобразовать в список? Ведь можно было оставить как есть
         preview = item.find_next(
             "img",
             class_="wallpapers__image"
         ).attrs.get("alt", "Not previews").split(", ")
-        data[link] = preview
+        all_images_names_and_links[link] = preview
 
-    return data
+    return all_images_names_and_links
 
 
 def get_category_page(link: str, page_num: int) -> str:
@@ -77,12 +123,54 @@ def main():
 
     print(f"Selected category '{category_name}' - {category_link}")
 
+    all_images_names_and_links: dict[str, list] = {}
+
     for page_num in range(1, 5):
         curr_page: str = get_category_page(category_link, page_num)
-
-        images_on_page: dict[str, list] = parse_images_on_page(curr_page)
-        print(images_on_page)
+        images_on_page: dict[str, list] = parse_images_on_page(curr_page, all_images_names_and_links)
         time.sleep(10)
+
+    show_images(all_images_names_and_links)
+
+    images_length: int = len(all_images_names_and_links)
+    selected_images_nums: list[int] = []
+    print("Select image number. Press 'q' to complete the input")
+    while True:
+        choice_image_number = input()
+        if choice_image_number == 'q':
+            break
+        elif not (1 <= int(choice_image_number) <= images_length):
+            raise ValueError("Unavailable image")
+        else:
+            selected_images_nums.append(int(choice_image_number))
+
+    image_name = get_image(all_images_names_and_links, selected_images_nums)
+    # В этом случае важно обратить внимание на то, что возвращает get_image()
+    # if choice_lang == 'en':
+    #        image_link = SITE_URL['en'] + image_link
+    # else:
+    #     image_link = SITE_URL['ru'] + image_link
+    # print(f"Selected category '{' '.join(image_name)}' - {image_link}")
+    #
+    #
+
+
+
+
+
+
+
+
+
+
+
+    # for page_num in range(1, 5):
+    #     curr_page: str = get_category_page(category_link, page_num)
+    #
+    #
+    #     images_on_page: dict[str, list] = parse_images_on_page(curr_page)
+    #     print(len(images_on_page))
+    #     time.sleep(10)
 
         # TODO: Доработать логику выбора картинки, скачать все
         #  широкоформатные размеры картинок
