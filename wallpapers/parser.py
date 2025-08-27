@@ -36,31 +36,76 @@ def get_image(
     return selected_images
 
 
-def get_image_resolution(image_link: str):
-    print(image_link)  # DEBUG
 
+def get_resolutions_by_section(name: str = "Широкоформатные", image_link: str= "")\
+        -> dict[str, list[tuple[str, str]]]:
     response = requests.get(image_link)
+
     soup = BeautifulSoup(response.text, features="html.parser")
-    widescreen_resolutions = soup.find_all(
-        "div",
-        class_="resolutions__title gui-h3",
-        string="Широкоформатные"
-    )
-    print(widescreen_resolutions)
-    # Не понимаю как же найти ссылку на конкретное разрешение..... В разрешениях для телефона, apple /
-    # используются одинаковые названия+
-    for li in widescreen_resolutions:
-        # Вот тут ниже в поиске - ошибка, тк в print(f"a.contents === {a.contents}") выводятся только
-        # первые элементы подзаголовков. Нужно искать по другому
-        a = (li.find_next("div",
-                          class_="resolutions__cell resolutions__caption").find_next
-             ("a", class_="resolutions__link"))
-        if a:
-            print(f"a.contents === {a.contents}")
-            if a.contents == '1920x1080' or a.contents == ["1920x1080"]:
-                link: str = a.get("href")
-                return link
-    return "Такого разрешения нет"
+    sections = soup.find_all(
+        'section',
+        class_='resolutions__section resolutions__section_torn'
+        )
+
+    resolutions: dict[str, list[tuple[str, str]]] = {}
+    for section in sections:
+        curr_div = section.find('div', string=name)
+        if curr_div:
+
+            all_resolutions_by_section = section.find_all(
+                'div', class_='resolutions__table'
+            )
+            for resolution in all_resolutions_by_section:
+                caption = resolution.find(
+                    'div',
+                    class_='resolutions__cell resolutions__caption'
+                ).get_text()
+
+                items = resolution.find_all(
+                    'ul',
+                    class_='resolutions__cell resolutions__list'
+                )
+                for item in items:
+                    resolutions[caption] = resolutions.get(caption, [])
+                    links = item.find_all('a', class_='resolutions__link')
+                    resolutions[caption] = [
+                        (link.get_text(), link.get('href'))
+                        for link in links
+                    ]
+    return resolutions
+
+
+def show_img_resolutions(x):
+    print(x)
+
+
+
+
+# def get_image_resolution(image_link: str):
+#     print(image_link)  # DEBUG
+#
+#     response = requests.get(image_link)
+#     soup = BeautifulSoup(response.text, features="html.parser")
+#     widescreen_resolutions = soup.find_all(
+#         "div",
+#         class_="resolutions__title gui-h3",
+#         string="Широкоформатные"
+#     )
+#     print(widescreen_resolutions)
+#     # Не понимаю как же найти ссылку на конкретное разрешение..... В разрешениях для телефона, apple /
+#     # используются одинаковые названия+
+#     for li in widescreen_resolutions:
+#         # Вот тут ниже в поиске - ошибка, тк в print(f"a.contents === {a.contents}") выводятся только
+#         # первые элементы подзаголовков. Нужно искать по другому
+#         a = (li.find_next("div",
+#                           class_="resolutions__cell resolutions__caption").find_next
+#              ("a", class_="resolutions__link"))
+#         if a:
+#             print(f"a.contents === {a.contents}")
+#             if a.contents == '1920x1080' or a.contents == ["1920x1080"]:
+#                 link: str = a.get("href")
+#                 return link
+#     return "Такого разрешения нет"
 
 
 # def download_image(img_link, url):
@@ -115,6 +160,8 @@ def get_category(
     return category_name, category_link
 
 
+
+
 def main():
     choice_lang = input("Choice language (en, ru): ").lower()
 
@@ -152,14 +199,15 @@ def main():
     selected_images_nums: list[int] = []
     print("Select image number. Press 'q' to complete the input")
     choice_image_number = input()
+    if choice_image_number.isdigit():
+        selected_images_nums.append(int(choice_image_number))
+
     while choice_image_number.lower() != 'q':
         choice_image_number = input()
-
         if not choice_image_number.isdigit():
             print("Enter a integer number")
             continue
-
-        if not (1 <= int(choice_image_number) <= images_length):
+        elif not (1 <= int(choice_image_number) <= images_length):
             break
         else:
             selected_images_nums.append(int(choice_image_number))
@@ -167,8 +215,14 @@ def main():
     images_names_and_links = get_image(all_images_names_and_links, selected_images_nums, url)
 
     for image_link, image_name in images_names_and_links.items():
-        img_lnk_for_dwnldng = get_image_resolution(image_link)
-        print("img_lnk_for_dwnldng", img_lnk_for_dwnldng)
+
+        img_resolitions = get_resolutions_by_section("Широкоформатные", image_link)
+        time.sleep(10)
+        for img_resolition in img_resolitions.items():
+            print(img_resolition)
+        print()
+
+        # print("img_lnk_for_dwnldng", img_lnk_for_dwnldng)
         # if img_lnk_for_dwnldng:
         #
         #     download_image(img_lnk_for_dwnldng, url)
