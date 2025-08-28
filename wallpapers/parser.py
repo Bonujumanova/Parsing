@@ -1,5 +1,8 @@
+import datetime
+import os
 import time
-from datetime import datetime
+import uuid
+
 from pprint import pprint
 
 import requests
@@ -9,22 +12,18 @@ from wallpapers.constants import CATEGORIES_MAP, SITE_URL
 
 
 def show_categories(categories: dict[str, str]) -> None:
-    # TODO: Реализовать вывод пронумерованных категорий
-    pass
+    for num, categories_name in enumerate(categories.keys(), 1):
+        print(f"{num}. {categories_name}")
 
 
 def show_images(data: dict[str, list]) -> None:
     length: int = len(str(len(data)))
     for number, value in enumerate(data.values(), 1):
         print(f"{number:>{length}}. {' '.join(value)}")
-    # TODO: Реализовать вывод пронумерованных картинок:
-    #  - Название
-    #  - Ключевые слова
-    #  - Абсолютная ссылка
 
 
 # TODO: Пересмотреть название функции.
-def get_image(
+def get_selected_img(
         images: dict[str, list],numbers: list[int], url: str
 ) -> dict[str, list]:
     selected_images: dict[str, list] = {}
@@ -75,95 +74,37 @@ def get_resolutions_by_section(name: str = "Широкоформатные", ima
     return resolutions
 
 
-def show_img_captions(x: dict):
-
-    for num, caption in enumerate(x.keys(), 1):
+def show_img_captions(captions_and_resolutions: dict) -> None:
+    for num, caption in enumerate(captions_and_resolutions.keys(), 1):
         print(f"{num}. {caption}")
-        # for items in v:
-        #     size, link = items
-        #     print(f"{size}")
-        print()
 
 
-
-
-def show_selected_caption_resolution(x: dict, number):
-    selected_caption = list(x.values())[number - 1]
+def show_selected_caption_resolutions(captions_and_resolutions: dict, number) -> list[tuple]:
+    selected_caption = list(captions_and_resolutions.values())[number - 1]
     for num, image in enumerate(selected_caption, 1):
-        size, link = image
-        print(f"{num}. {size} {link}")
+        size, _ = image
+        print(f"{num}. SIZE: {size}")
     return selected_caption
 
-def download_selected_image(selected_caption, selected_img_num,url, img_name):
+def download_selected_image(selected_caption, selected_img_num, main_url, img_name) -> None:
     img_size, img_link = selected_caption[selected_img_num - 1]
 
-    response = requests.get(url + img_link)
-
+    response = requests.get(main_url + img_link)
     soup = BeautifulSoup(response.text, features="html.parser")
     link_for_downloading = soup.find(
         'a',
         class_='gui-button gui-button_full-height'
     ).get('href')
-
     response = requests.get(link_for_downloading)
 
-    import datetime
-    import os
-    import uuid
 
     year, month, day = datetime.date.today().isoformat().split("-")
     unique_id: str = str(uuid.uuid4())
     curr_name = f"{img_name}_{unique_id}_{img_size}"
 
     os.makedirs(f'{year}/{month}/{day}', exist_ok=True)
-
-    with open(f"{year}/{month}/{day}/{curr_name}.jpg", "wb") as i:
-        i.write(response.content)
-
-
-
-
-
-
-# def get_image_resolution(image_link: str):
-#     print(image_link)  # DEBUG
-#
-#     response = requests.get(image_link)
-#     soup = BeautifulSoup(response.text, features="html.parser")
-#     widescreen_resolutions = soup.find_all(
-#         "div",
-#         class_="resolutions__title gui-h3",
-#         string="Широкоформатные"
-#     )
-#     print(widescreen_resolutions)
-#     # Не понимаю как же найти ссылку на конкретное разрешение..... В разрешениях для телефона, apple /
-#     # используются одинаковые названия+
-#     for li in widescreen_resolutions:
-#         # Вот тут ниже в поиске - ошибка, тк в print(f"a.contents === {a.contents}") выводятся только
-#         # первые элементы подзаголовков. Нужно искать по другому
-#         a = (li.find_next("div",
-#                           class_="resolutions__cell resolutions__caption").find_next
-#              ("a", class_="resolutions__link"))
-#         if a:
-#             print(f"a.contents === {a.contents}")
-#             if a.contents == '1920x1080' or a.contents == ["1920x1080"]:
-#                 link: str = a.get("href")
-#                 return link
-#     return "Такого разрешения нет"
-
-
-# def download_image(img_link, url):
-#     response = requests.get(url + img_link)
-#     soup = BeautifulSoup(response.text, features="html.parser")
-#
-#     a = img_link.find_all("a", class_="gui-button gui-button_full-height")
-#     finally_download_link: str = a.get("href")
-#     print(f"download_image: {finally_download_link}")
-#
-#     if finally_download_link:
-#         response = requests.get(finally_download_link)
-#         with open("images/ssss.png", "ab+") as f:
-#             f.write(response.content)
+    with open(f"{year}/{month}/{day}/{curr_name}.jpg", "wb") as f:
+        f.write(response.content)
 
 
 def parse_images_on_page(curr_page: str, all_images_names_and_links) -> dict[str, list]:
@@ -204,8 +145,6 @@ def get_category(
     return category_name, category_link
 
 
-
-
 def main():
     choice_lang = input("Choice language (en, ru): ").lower()
 
@@ -224,82 +163,69 @@ def main():
                                                 choice_category_number)
 
     print(f"Selected category '{category_name}' - {category_link}")
-    all_images_names_and_links: dict[str, list] = {}
+    images_and_links: dict[str, list] = {}
 
     for page_num in range(1, 2):
         curr_page: str = get_category_page(category_link, page_num)
-        # TODO: Не используется?
-        images_on_page: dict[str, list] = parse_images_on_page(curr_page, all_images_names_and_links)
-
+        parse_images_on_page(curr_page, images_and_links)
         for i in range(10, 0, -1):
             print(f"\rLoading {i}...", end="")
             time.sleep(1)
-
-    show_images(all_images_names_and_links)
+    print()
+    show_images(images_and_links)
 
     # TODO: название переменной
-    images_length: int = len(all_images_names_and_links)
+    count_images: int = len(images_and_links)
 
     selected_images_nums: list[int] = []
-    print("Select image number. Press 'q' to complete the input")
+    print("\nSelect image number. Press 'q' to complete the input\n")
     choice_image_number = input()
     if choice_image_number.isdigit():
         selected_images_nums.append(int(choice_image_number))
 
     while choice_image_number.lower() != 'q':
         choice_image_number = input()
+        if choice_image_number == 'q':
+            break
         if not choice_image_number.isdigit():
             print("Enter a integer number")
             continue
-        elif not (1 <= int(choice_image_number) <= images_length):
+        elif not (1 <= int(choice_image_number) <= count_images):
             break
         else:
             selected_images_nums.append(int(choice_image_number))
-    url: str = SITE_URL[choice_lang]
-    images_names_and_links = get_image(all_images_names_and_links, selected_images_nums, url)
+    selected_main_url: str = SITE_URL[choice_lang]
+    images_names_and_links = get_selected_img(
+        images_and_links, selected_images_nums, selected_main_url
+    )
 
     for image_link, image_name in images_names_and_links.items():
 
-        img_resolitions = get_resolutions_by_section("Широкоформатные", image_link)
-        time.sleep(10)
-        print(f"Choose resolution for image {image_name}")
-        show_img_captions(img_resolitions)
-        number = int(input())
-        selected_caption = show_selected_caption_resolution(img_resolitions, number)
-        selected_caption_img_num = int(input())
-        download_selected_image(selected_caption, selected_caption_img_num, url, image_name[0])
+        captions_and_resolutions = get_resolutions_by_section("Широкоформатные", image_link)
+
+        for i in range(10, -1, -1):
+            print(f"\rLoading {'*' * i}...", end="")
+            time.sleep(1)
         print()
+        show_img_captions(captions_and_resolutions)
 
+        print(f"\nChoose caption for image '{image_name[0]}'")
 
-        # print("img_lnk_for_dwnldng", img_lnk_for_dwnldng)
-        # if img_lnk_for_dwnldng:
-        #
-        #     download_image(img_lnk_for_dwnldng, url)
-        #
+        caption_number = int(input())
 
-    # В этом случае важно обратить внимание на то, что возвращает get_image()
-    # if choice_lang == 'en':
-    #        image_link = SITE_URL['en'] + image_link
-    # else:
-    #     image_link = SITE_URL['ru'] + image_link
-    # print(f"Selected category '{' '.join(image_name)}' - {image_link}")
-    #
-    #
+        selected_caption = show_selected_caption_resolutions(
+            captions_and_resolutions, caption_number
+        )
 
-    # for page_num in range(1, 5):
-    #     curr_page: str = get_category_page(category_link, page_num)
-    #
-    #
-    #     images_on_page: dict[str, list] = parse_images_on_page(curr_page)
-    #     print(len(images_on_page))
-    #     time.sleep(10)
+        print(f"\nSelect resolution for image")
+        num_selected_resolution = int(input())
 
-    # TODO: Доработать логику выбора картинки, скачать все
-    #  широкоформатные размеры картинок
-    #  Картинки должны сохранятся в следующей директории
-    #  "номер_месяца/день_месяца": 08/22/img1.png, ...
-    #  Подсказка: Модули os, from datetime import datetime, также метод
-    #  strftime (можно и другой метод использовать)
+        download_selected_image(
+            selected_caption,
+            num_selected_resolution,
+            selected_main_url,
+            image_name[0]
+        )
 
 
 main()
