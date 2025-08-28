@@ -75,8 +75,52 @@ def get_resolutions_by_section(name: str = "Широкоформатные", ima
     return resolutions
 
 
-def show_img_resolutions(x):
-    print(x)
+def show_img_captions(x: dict):
+
+    for num, caption in enumerate(x.keys(), 1):
+        print(f"{num}. {caption}")
+        # for items in v:
+        #     size, link = items
+        #     print(f"{size}")
+        print()
+
+
+
+
+def show_selected_caption_resolution(x: dict, number):
+    selected_caption = list(x.values())[number - 1]
+    for num, image in enumerate(selected_caption, 1):
+        size, link = image
+        print(f"{num}. {size} {link}")
+    return selected_caption
+
+def download_selected_image(selected_caption, selected_img_num,url, img_name):
+    img_size, img_link = selected_caption[selected_img_num - 1]
+
+    response = requests.get(url + img_link)
+
+    soup = BeautifulSoup(response.text, features="html.parser")
+    link_for_downloading = soup.find(
+        'a',
+        class_='gui-button gui-button_full-height'
+    ).get('href')
+
+    response = requests.get(link_for_downloading)
+
+    import datetime
+    import os
+    import uuid
+
+    year, month, day = datetime.date.today().isoformat().split("-")
+    unique_id: str = str(uuid.uuid4())
+    curr_name = f"{img_name}_{unique_id}_{img_size}"
+
+    os.makedirs(f'{year}/{month}/{day}', exist_ok=True)
+
+    with open(f"{year}/{month}/{day}/{curr_name}.jpg", "wb") as i:
+        i.write(response.content)
+
+
 
 
 
@@ -218,9 +262,14 @@ def main():
 
         img_resolitions = get_resolutions_by_section("Широкоформатные", image_link)
         time.sleep(10)
-        for img_resolition in img_resolitions.items():
-            print(img_resolition)
+        print(f"Choose resolution for image {image_name}")
+        show_img_captions(img_resolitions)
+        number = int(input())
+        selected_caption = show_selected_caption_resolution(img_resolitions, number)
+        selected_caption_img_num = int(input())
+        download_selected_image(selected_caption, selected_caption_img_num, url, image_name[0])
         print()
+
 
         # print("img_lnk_for_dwnldng", img_lnk_for_dwnldng)
         # if img_lnk_for_dwnldng:
