@@ -80,7 +80,7 @@ def get_resolutions_by_section(
 def show_selected_image_info(
         data: dict[str, list[tuple[str, str]]],
         number: int
-) -> list[tuple]:
+) -> list[tuple[str, str]]:
     selected_caption = list(data.values())[number - 1]
     for index, image in enumerate(selected_caption, start=1):
         resolution, _ = image
@@ -105,12 +105,11 @@ def save_image(content: bytes, filename: Optional[str] = None) -> None:
         f.write(content)
 
 
-# TODO: Указать аннотации типов для параметров
 def download_selected_image(
-        selected_caption,
-        selected_img_num,
-        site_base_url,
-        img_name
+        selected_caption: list[tuple[str, str]],
+        selected_img_num: int,
+        site_base_url: str,
+        img_name: str
 ) -> None:
     resolution, img_link = selected_caption[selected_img_num - 1]
     soup = get_page(site_base_url + img_link)
