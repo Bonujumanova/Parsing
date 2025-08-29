@@ -34,6 +34,13 @@ CATEGORIES_MAP: dict[str, dict[str, str]] = {
         'Цветы': 'https://wallpaperscraft.ru/catalog/flowers',
         'Черно-белое': 'https://wallpaperscraft.ru/catalog/black_and_white',
         'Черный': 'https://wallpaperscraft.ru/catalog/black'
+    },
+    "en": {
+        '3D': 'https://wallpaperscraft.com/catalog/3d',
+        'Abstract': 'https://wallpaperscraft.com/catalog/abstract',
+        'Anime': 'https://wallpaperscraft.com/catalog/anime',
+        # ...
+
     }
 }
 
