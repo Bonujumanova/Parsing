@@ -163,7 +163,15 @@ def countdown_loader(delay: int, **kwargs) -> None:
     else:
         print("\r", end="")
 
+def preprocess_categories_map(lang: str, base_url: str) -> dict[str, str]:
+    base_url: str = SITE_URL[lang]
 
+    categories: dict[str, str] = {}
+    for url, names in CATEGORIES_MAP.items():
+        name = names.get(lang)
+        categories[name] = base_url + url
+
+    return categories
 def main() -> None:
     max_page: int = 1
 
@@ -173,6 +181,8 @@ def main() -> None:
 
     base_url: str = SITE_URL[choice_lang]
     categories = CATEGORIES_MAP.get(choice_lang)
+    categories = preprocess_categories_map(choice_lang, base_url)
+
 
     show_ordered_items(categories)
 
@@ -197,21 +207,21 @@ def main() -> None:
 
     selected_images_nums: list[int] = []
     print("\nSelect image number. Press 'q' to complete the input\n")
-    choice_image_number = input()
-    if choice_image_number.isdigit():
-        selected_images_nums.append(int(choice_image_number))
 
     # TODO: Баг: Если ввести неверный номер картинки программа
     #  не выводит соответствующую информацию.
-    while choice_image_number.lower() != 'q':
+    # Решила добавить флаг, тк пришлось бы делать проверку для самого первого ввода
+
+    flag: bool = True
+    while flag:
         choice_image_number = input()
-        if choice_image_number == 'q':
+        if choice_image_number.lower() == 'q':
             break
         if not choice_image_number.isdigit():
             print("Enter a integer number")
             continue
-        elif not (1 <= int(choice_image_number) <= len(images_data)):
-            break
+        elif int(choice_image_number) not in range(1, len(images_data) + 1):
+            print(f"This picture doesn't exists. Select an image number from 1 to {len(images_data)}")
         else:
             selected_images_nums.append(int(choice_image_number))
 
